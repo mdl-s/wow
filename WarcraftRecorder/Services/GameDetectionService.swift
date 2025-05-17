@@ -146,11 +146,6 @@ class GameDetectionService: ObservableObject {
             }
         }
         
-        // Pour la démo, simuler des détections
-        #if DEBUG
-        print("Debug mode: Will simulate game detection")
-        simulateGameDetection()
-        #endif
     }
     
     func stopMonitoring() {
@@ -631,17 +626,6 @@ class GameDetectionService: ObservableObject {
                 // Si aucun fichier de log n'a encore été traité, chercher des fichiers dans le dossier
                 self.checkForExistingLogFiles()
                 
-                // Mettre à jour le status
-                DispatchQueue.main.asyncAfter(deadline: .now() + 20) { [weak self] in
-                    guard let self = self, self.isMonitoring else { return }
-                    
-                    // Si nous n'avons pas encore de détection d'arène après 20 secondes
-                    // mais qu'il y a activité de combat, démarrer l'enregistrement par défaut
-                    if self.currentGameType == nil && self.arenaDetector.isArenaLikelyActive() {
-                        print("Auto-starting recording for potential arena match after delay")
-                        self.gameDetected(type: .arena2v2, mapName: "Auto-detected Arena (Delay)")
-                    }
-                }
             }
         }
         
@@ -937,9 +921,7 @@ private func handleMythicPlusEvent(_ line: String) {
     }
 }
 
-private func handleSkirmishEvent(_ line: String) {
-    // Envelopper dans un bloc do-catch pour éviter les crashes
-    do {
+    private func handleSkirmishEvent(_ line: String) {
         // Détecter le début grâce à l'aura de préparation
         if line.contains("SPELL_AURA_APPLIED") && line.contains("ARENA_PREPARATION") {
             print("DETECTED: Skirmish beginning via preparation aura")
@@ -969,47 +951,42 @@ private func handleSkirmishEvent(_ line: String) {
             gameEnded()
             print("Skirmish ended")
         }
-    } catch {
-        print("Error in handleSkirmishEvent: \(error)")
     }
-}
+
 
     private func handleArenaEvent(_ line: String) {
-        do {
-            // Ne traiter que les événements vraiment importants d'arène
-            if line.contains("ARENA_MATCH_START") {
-                print("DETECTED: Arena match beginning via ARENA_MATCH_START")
-                
-                // Déterminer le type d'arène
-                let arenaType: GameType
-                if line.contains("2v2") || line.contains("2 vs 2") {
-                    arenaType = .arena2v2
-                } else if line.contains("3v3") || line.contains("3 vs 3") {
-                    arenaType = .arena3v3
-                } else if line.contains("5v5") || line.contains("5 vs 5") {
-                    arenaType = .arena5v5
-                } else {
-                    // Par défaut, considérer comme 2v2
-                    arenaType = .arena2v2
-                }
-                
-                // Démarrer uniquement si aucun enregistrement n'est déjà en cours
-                if currentGameType == nil {
-                    gameDetected(type: arenaType, mapName: "Arena (Direct Detection)")
-                }
-                return
+        // Ne traiter que les événements vraiment importants d'arène
+        if line.contains("ARENA_MATCH_START") {
+            print("DETECTED: Arena match beginning via ARENA_MATCH_START")
+            
+            // Déterminer le type d'arène
+            let arenaType: GameType
+            if line.contains("2v2") || line.contains("2 vs 2") {
+                arenaType = .arena2v2
+            } else if line.contains("3v3") || line.contains("3 vs 3") {
+                arenaType = .arena3v3
+            } else if line.contains("5v5") || line.contains("5 vs 5") {
+                arenaType = .arena5v5
+            } else {
+                // Par défaut, considérer comme 2v2
+                arenaType = .arena2v2
             }
             
-            // Détection spécifique de fin d'arène
-            if line.contains("ARENA_MATCH_END") {
-                print("DETECTED: Arena match ended")
-                gameEnded()
-                return
+            // Démarrer uniquement si aucun enregistrement n'est déjà en cours
+            if currentGameType == nil {
+                gameDetected(type: arenaType, mapName: "Arena (Direct Detection)")
             }
-        } catch {
-            print("Error in handleArenaEvent: \(error)")
+            return
+        }
+        
+        // Détection spécifique de fin d'arène
+        if line.contains("ARENA_MATCH_END") {
+            print("DETECTED: Arena match ended")
+            gameEnded()
+            return
         }
     }
+
 
 private func determineArenaMap(from line: String) -> String {
     let arenaNames = [

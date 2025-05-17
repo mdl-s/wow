@@ -1,10 +1,3 @@
-//
-//  GeneralSettingsView.swift
-//  WarcraftRecorder
-//
-//  Created by michael slimani on 12/05/2025.
-//
-
 import SwiftUI
 import UniformTypeIdentifiers
 import AppKit
@@ -174,13 +167,14 @@ struct GeneralSettingsView: View {
         logFolderPath = gameDetectionService.logFolderPath
         recordingsFolder = recordingService.recordingsFolder
         
-        // Charger la qualité vidéo actuelle
-        selectedQuality = recordingService.videoQuality.rawValue
+        // Charger la qualité vidéo actuelle si déjà sauvegardée (sinon garder la valeur par défaut)
+        if let storedQuality = UserDefaults.standard.string(forKey: "videoQuality") {
+            selectedQuality = storedQuality
+        }
         
-        // Charger le paramètre d'auto-démarrage du monitoring
         autoStartMonitoring = gameDetectionService.autoStartMonitoring
+        // AutoStartRecording n’est qu’en local ici, à adapter à ton architecture si tu veux l’utiliser dans le service
         
-        // Si le chemin du dossier de logs est vide, essayer de le détecter automatiquement
         if logFolderPath.isEmpty {
             autoDetectLogFolder()
         }
@@ -190,13 +184,11 @@ struct GeneralSettingsView: View {
         gameDetectionService.logFolderPath = logFolderPath
         recordingService.recordingsFolder = recordingsFolder
         
-        // Sauvegarder le paramètre d'auto-démarrage du monitoring
-        gameDetectionService.autoStartMonitoring = autoStartMonitoring
+        // Sauvegarder dans UserDefaults pour retrouver la sélection
+        UserDefaults.standard.set(selectedQuality, forKey: "videoQuality")
         
-        // Convertir la qualité sélectionnée
-        if let quality = RecordingQuality(rawValue: selectedQuality) {
-            recordingService.videoQuality = quality
-        }
+        // Mémoriser autoStartMonitoring (à utiliser dans GameDetectionService pour l’automatisme)
+        gameDetectionService.autoStartMonitoring = autoStartMonitoring
         
         status = "Settings saved successfully!"
         
@@ -259,6 +251,7 @@ struct GeneralSettingsView: View {
     }
 }
 
+// Pour le preview Xcode
 #Preview {
     GeneralSettingsView()
         .environmentObject(GameDetectionService())

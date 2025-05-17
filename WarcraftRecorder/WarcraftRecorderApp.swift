@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import UserNotifications
 
 @main
 struct WarcraftRecorderApp: App {
@@ -16,7 +17,17 @@ struct WarcraftRecorderApp: App {
     private let wowCheckTimer = Timer.publish(every: 10, on: .main, in: .common).autoconnect()
     
     init() {
-        // Paramètres initiaux au lancement de l'application
+        // Demander l'autorisation d'envoyer des notifications au lancement de l'app
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
+            if let error = error {
+                print("Error requesting notification permission: \(error.localizedDescription)")
+            } else if granted {
+                print("Notification permission granted.")
+            } else {
+                print("Notification permission denied.")
+            }
+        }
+        
         print("WarcraftRecorder starting up")
     }
     
@@ -87,12 +98,23 @@ struct WarcraftRecorderApp: App {
         }
     }
     
-    // Fonction pour afficher une notification
+    // Fonction moderne pour afficher une notification (UserNotifications)
     private func showNotification(title: String, message: String) {
-        let notification = NSUserNotification()
-        notification.title = title
-        notification.informativeText = message
-        notification.soundName = NSUserNotificationDefaultSoundName
-        NSUserNotificationCenter.default.deliver(notification)
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = message
+        content.sound = .default
+        
+        let request = UNNotificationRequest(
+            identifier: UUID().uuidString,
+            content: content,
+            trigger: nil // Immédiat
+        )
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Error displaying notification: \(error.localizedDescription)")
+            }
+        }
     }
 }

@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSSystemAdministrationUsageDescription</key>
+	<string>L&apos;application a besoin d&apos;accéder aux processus système pour détecter World of Warcraft.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

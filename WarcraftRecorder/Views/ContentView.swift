@@ -1,9 +1,3 @@
-//
-//  ContentView.swift
-//  WarcraftRecorder
-//
-//  Created by michael slimani on 12/05/2025.
-//
 import SwiftUI
 
 struct ContentView: View {
@@ -239,13 +233,13 @@ struct ContentView: View {
         .onAppear {
             updateStatus()
         }
-        .onChange(of: gameDetectionService.isMonitoring) { oldValue, newValue in
+        .onChange(of: gameDetectionService.isMonitoring) { _, _ in
             updateStatus()
         }
-        .onChange(of: recordingService.isRecording) { oldValue, newValue in
+        .onChange(of: recordingService.isRecording) { _, _ in
             updateStatus()
         }
-        .onChange(of: gameDetectionService.detectionStatus) { oldValue, newValue in
+        .onChange(of: gameDetectionService.detectionStatus) { _, _ in
             updateStatus()
         }
     }
@@ -295,6 +289,7 @@ struct ContentView: View {
     }
     
     private func performDiagnostics() {
+        let quality = UserDefaults.standard.string(forKey: "videoQuality") ?? "Default/Unknown"
         let diagnosticResults = """
         === WarcraftRecorder Diagnostics ===
         
@@ -312,20 +307,22 @@ struct ContentView: View {
         
         Recording settings:
         Output folder: \(recordingService.recordingsFolder)
-        Quality: \(recordingService.videoQuality.rawValue)
+        Quality: \(quality)
         
         === End of Diagnostics ===
         """
         
         print(diagnosticResults)
         
-        // Afficher les résultats dans une alerte
+        // Afficher les résultats dans une alerte (uniquement macOS)
+        #if os(macOS)
         let alert = NSAlert()
         alert.messageText = "Diagnostics Results"
         alert.informativeText = diagnosticResults
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
         alert.runModal()
+        #endif
         
         // Forcer une vérification des logs
         if gameDetectionService.isMonitoring {

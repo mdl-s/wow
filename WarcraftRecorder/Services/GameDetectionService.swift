@@ -88,7 +88,6 @@ class GameDetectionService: ObservableObject {
     }
 
     private func updateStatus(_ status: String) {
-        print("GameDetectionService: \(status)")
         DispatchQueue.main.async { self.detectionStatus = status }
     }
 
